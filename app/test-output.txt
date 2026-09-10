@@ -1,0 +1,4 @@
+line1 := "SOoqyUSZE72DBdG316aYsTIu/nChYAxTV6YLU8bzOVY=\tR6ioUf9Qxdr8BGwE+dM9g8dQdI8ynX/Ose0WRiie+jk=\t51820\toff\n"
+line2 := "+loDGuu6zAxLLwuCvdjJGy26l/q0UHI00co++uvDwXg=\t(none)\t192.24.141.184:51820\t10.6.0.2/32\t1788820051\t66418732\t867925452\toff\n"
+line3 := "yfjy63AUEw15fg76IabU4hHHSJO8qsmpuMdDC5VY73k=\t(none)\t(none)\t10.6.0.3/32\t0\t0\t0\toff\n"
+stdout := line1 + line2 + line3
