@@ -2,9 +2,9 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"math/big"
 	"os"
+	"os/exec"
 	"slices"
 	"strconv"
 	s "strings"
@@ -23,44 +23,33 @@ type Device struct {
 	MbTransferred   string `json:"mb_transferred"`
 }
 
-var devicesArray []Device
 var knownDeviceMap = map[string]string{
 	"+loDGuu6zAxLLwuCvdjJGy26l/q0UHI00co++uvDwXg=": "iPhone",
 	"yfjy63AUEw15fg76IabU4hHHSJO8qsmpuMdDC5VY73k=": "Desktop"}
 
-// What's left:
-// write the JSON to a file via 'write-to-temp-then-rename into /run/wg-status.json' instead of just printing to stdout
-// set up the cron job to run it every 15-30s.
-// add wg interface back in?
+const statusDir = "/run" // change to "run" for laptop/desktop testing
+
 func main() {
-	// cmd := exec.Command("sudo", "wg", "show", "wg0", "dump")
-	// stdout, err := cmd.Output()
-	// if err != nil {
-	// 		fmt.Println(err.Error())
-	// 		return
-	// }
-
-	line1 := "SOoqyUSZE72DBdG316aYsTIu/nChYAxTV6YLU8bzOVY=\tR6ioUf9Qxdr8BGwE+dM9g8dQdI8ynX/Ose0WRiie+jk=\t51820\toff\n"
-	line2 := "+loDGuu6zAxLLwuCvdjJGy26l/q0UHI00co++uvDwXg=\t(none)\t192.24.141.184:51820\t10.6.0.2/32\t1788820051\t66418732\t867925452\toff\n"
-	line3 := "yfjy63AUEw15fg76IabU4hHHSJO8qsmpuMdDC5VY73k=\t(none)\t(none)\t10.6.0.3/32\t0\t0\t0\toff\n"
-	stdout := line1 + line2 + line3
-
-	for _, deviceLine := range cleanedOutputTmp(stdout) {
-		mappedDevice := mapDevice(deviceLine)
-		devicesArray = append(devicesArray, mappedDevice)
-	}
-
-	jsonDevices, _ := json.MarshalIndent(devicesArray, "", " ")
-	createTempFile(jsonDevices)
-	fmt.Println(string(jsonDevices))
-}
-
-func createTempFile(stdout []byte) {
-	file, err := os.CreateTemp("run", "wg-status.json.tmp")
+	cmd := exec.Command("sudo", "wg", "show", "wg0", "dump")
+	stdout, err := cmd.Output()
 	if err != nil {
 		panic(err)
 	}
-	// defer os.Rename("run/wg-status.json.tmp*", "run/wg-status.json")
+
+	var devicesArray []Device
+	for _, deviceLine := range cleanedOutput(stdout) {
+		mappedDevice := mapDevice(deviceLine)
+		devicesArray = append(devicesArray, mappedDevice)
+	}
+	jsonDevices, _ := json.MarshalIndent(devicesArray, "", " ")
+	buildJsonFile(jsonDevices)
+}
+
+func buildJsonFile(stdout []byte) {
+	file, err := os.CreateTemp(statusDir, "wg-status.json.tmp")
+	if err != nil {
+		panic(err)
+	}
 
 	if _, err := file.Write(stdout); err != nil {
 		panic(err)
@@ -68,7 +57,9 @@ func createTempFile(stdout []byte) {
 	if err := file.Close(); err != nil {
 		panic(err)
 	}
-	if err := os.Rename("run/wg-status.json.tmp*", "run/wg-status.json"); err != nil {
+
+	newStatusDir := statusDir + "/wg-status.json"
+	if err := os.Rename(file.Name(), newStatusDir); err != nil {
 		panic(err)
 	}
 }
