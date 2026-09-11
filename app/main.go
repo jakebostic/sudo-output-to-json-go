@@ -24,8 +24,8 @@ type Device struct {
 }
 
 var knownDeviceMap = map[string]string{
-	"+loDGuu6zAxLLwuCvdjJGy26l/q0UHI00co++uvDwXg=": "iPhone",
-	"yfjy63AUEw15fg76IabU4hHHSJO8qsmpuMdDC5VY73k=": "Desktop"}
+	"phone_key_****": "iPhone",
+	"desktop_key_****": "Desktop"}
 
 const statusDir = "/run" // change to "run" for laptop/desktop testing
 
@@ -46,8 +46,12 @@ func main() {
 }
 
 func buildJsonFile(stdout []byte) {
-	file, err := os.CreateTemp(statusDir, "wg-status.json.tmp")
+	file, err := os.CreateTemp(statusDir, "config.json.tmp")
 	if err != nil {
+		panic(err)
+	}
+
+	if err := file.Chmod(0644); err != nil {
 		panic(err)
 	}
 
@@ -58,7 +62,7 @@ func buildJsonFile(stdout []byte) {
 		panic(err)
 	}
 
-	newStatusDir := statusDir + "/wg-status.json"
+	newStatusDir := statusDir + "/config.json"
 	if err := os.Rename(file.Name(), newStatusDir); err != nil {
 		panic(err)
 	}
@@ -71,7 +75,7 @@ func mapDevice(deviceLine string) Device {
 		formattedLine[3],
 		formattedLine[2],
 		parseTime(formattedLine[4]),
-		"51820",
+		"****",
 		parseTransferBytes(formattedLine[5]),
 		parseTransferBytes(formattedLine[6])}
 }
